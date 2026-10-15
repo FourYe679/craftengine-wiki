@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CraftEngine 大白话 Wiki</title>
+<style>
+:root{
+  --bg:#f4f6f4;
+  --sidebar:#ffffff;
+  --text:#1f2328;
+  --muted:#6a7280;
+  --border:#dfe3e0;
+  --accent:#2e7d32;
+  --accent-hover:#1b5e20;
+  --accent-soft:#e7f3e8;
+  --code-bg:#eef1ef;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+}
+:root[data-theme="dark"]{
+  --bg:#0f1210;
+  --sidebar:#151916;
+  --text:#d7ddd7;
+  --muted:#8a938a;
+  --border:#262c28;
+  --accent:#5fbb63;
+  --accent-hover:#7dce81;
+  --accent-soft:#1d271f;
+  --code-bg:#1b201d;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.8;
+}
+
+/* ===== 侧边栏 ===== */
+#sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:300px;
+  background:var(--sidebar);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;transition:transform .2s ease;
+}
+.sb-header{padding:16px 16px 10px;border-bottom:1px solid var(--border)}
+.sb-title{font-size:17px;font-weight:700;color:var(--accent);margin:0 0 2px}
+.sb-sub{font-size:12px;color:var(--muted);margin:0 0 10px}
+.sb-tools{display:flex;gap:8px}
+#search{
+  flex:1;min-width:0;padding:7px 10px;font-size:13px;
+  border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);
+  outline:none;
+}
+#search:focus{border-color:var(--accent)}
+#themeBtn{
+  padding:6px 10px;font-size:13px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);
+}
+#themeBtn:hover{border-color:var(--accent);color:var(--accent)}
+#nav{flex:1;overflow-y:auto;padding:8px 0 20px}
+.nav-item{display:block}
+.nav-link{
+  display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;
+  padding:8px 18px;font-size:13.5px;line-height:1.5;color:var(--text);
+  border-left:3px solid transparent;font-family:inherit;
+}
+.nav-link:hover{background:var(--accent-soft);color:var(--accent)}
+.nav-item.active > .nav-link{
+  background:var(--accent-soft);color:var(--accent);
+  border-left-color:var(--accent);font-weight:600;
+}
+.nav-subs{display:none;padding:2px 0 6px}
+.nav-item.active .nav-subs{display:block}
+.nav-subs a{
+  display:block;padding:5px 18px 5px 34px;font-size:12.5px;color:var(--muted);
+  cursor:pointer;text-decoration:none;line-height:1.5;
+}
+.nav-subs a:hover{color:var(--accent)}
+.nav-item.hidden{display:none}
+
+/* ===== 遮罩（手机端） ===== */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90}
+
+/* ===== 正文 ===== */
+#main{margin-left:300px;height:100vh;overflow-y:auto;scroll-behavior:smooth}
+#menuBtn{
+  display:none;position:fixed;top:12px;left:12px;z-index:80;
+  padding:8px 12px;font-size:16px;cursor:pointer;
+  border:1px solid var(--border);border-radius:6px;background:var(--sidebar);color:var(--text);
+  box-shadow:var(--shadow);
+}
+#content{max-width:880px;margin:0 auto;padding:36px 40px 10px}
+#content h1{font-size:28px;line-height:1.4;margin:0 0 20px;padding-bottom:12px;border-bottom:2px solid var(--accent)}
+#content h2{font-size:22px;margin:32px 0 12px}
+#content h3{font-size:18px;margin:28px 0 10px;padding-top:8px;scroll-margin-top:20px}
+#content h4{font-size:16px;margin:22px 0 8px}
+#content p{margin:10px 0}
+#content ul,#content ol{padding-left:26px}
+#content li{margin:4px 0}
+#content a{color:var(--accent);text-decoration:none}
+#content a:hover{text-decoration:underline}
+#content blockquote{
+  margin:14px 0;padding:10px 16px;border-left:4px solid var(--accent);
+  background:var(--accent-soft);border-radius:0 6px 6px 0;color:var(--text);
+}
+#content code{
+  font-family:Consolas,"Courier New",monospace;font-size:13px;
+  background:var(--code-bg);padding:2px 6px;border-radius:4px;
+}
+#content pre{
+  background:var(--code-bg);padding:14px 16px;border-radius:8px;
+  overflow-x:auto;border:1px solid var(--border);
+}
+#content pre code{background:none;padding:0;font-size:13px;line-height:1.6}
+#content table{border-collapse:collapse;width:100%;margin:14px 0;display:block;overflow-x:auto}
+#content th,#content td{border:1px solid var(--border);padding:8px 12px;font-size:13.5px;text-align:left}
+#content th{background:var(--accent-soft);color:var(--accent)}
+#content img{max-width:100%;border-radius:6px}
+#content hr{border:none;border-top:1px solid var(--border);margin:28px 0}
+#content kbd{
+  border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;
+  padding:1px 7px;font-size:12px;background:var(--sidebar);
+}
+.home-actions{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap}
+.btn{
+  display:inline-block;padding:10px 22px;border-radius:6px;font-size:14px;cursor:pointer;
+  background:var(--accent);color:#fff;text-decoration:none;border:none;font-family:inherit;
+}
+.btn:hover{background:var(--accent-hover);text-decoration:none}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn.ghost:hover{background:var(--accent-soft)}
+
+.pager{
+  max-width:880px;margin:30px auto 0;padding:20px 40px 50px;
+  display:flex;justify-content:space-between;gap:12px;
+}
+.pager a{
+  padding:10px 18px;border:1px solid var(--border);border-radius:8px;
+  text-decoration:none;color:var(--text);background:var(--sidebar);font-size:14px;
+}
+.pager a:hover{border-color:var(--accent);color:var(--accent)}
+.pager .placeholder{visibility:hidden}
+.loading{padding:60px 40px;color:var(--muted);text-align:center}
+
+/* ===== 手机端 ===== */
+@media (max-width:900px){
+  #sidebar{transform:translateX(-100%);box-shadow:var(--shadow)}
+  body.sb-open #sidebar{transform:translateX(0)}
+  body.sb-open #overlay{display:block}
+  #main{margin-left:0}
+  #menuBtn{display:block}
+  #content{padding:64px 20px 10px}
+  .pager{padding:16px 20px 40px}
+}
+</style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div class="sb-header">
+    <p class="sb-title">CraftEngine 大白话 Wiki</p>
+    <p class="sb-sub">从安装到高级配置，照着做就行</p>
+    <div class="sb-tools">
+      <input id="search" type="text" placeholder="搜索章节…">
+      <button id="themeBtn" type="button">🌙</button>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+</aside>
+<div id="overlay"></div>
+
+<main id="main">
+  <button id="menuBtn" type="button">☰ 目录</button>
+  <article id="content"><p class="loading">正在加载 Wiki 内容…</p></article>
+  <div class="pager">
+    <a id="prev" href="#"></a>
+    <a id="next" href="#"></a>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(function(){
+  var navEl = document.getElementById('nav');
+  var contentEl = document.getElementById('content');
+  var mainEl = document.getElementById('main');
+  var prevBtn = document.getElementById('prev');
+  var nextBtn = document.getElementById('next');
+  var sections = [];
+  var current = -1;
+
+  marked.setOptions({gfm:true, breaks:false});
+
+  /* ---------- 解析 Markdown：按 ## 切章节 ---------- */
+  function parseSections(md){
+    var lines = md.split(/\r?\n/);
+    var introLines = [];
+    var raw = [];
+    var cur = null;
+    for (var i=0;i<lines.length;i++){
+      var line = lines[i];
+      var m = line.match(/^##\s+(.+?)\s*$/);
+      if (m){
+        if (cur) raw.push(cur);
+        cur = {title:m[1], lines:[]};
+      } else if (cur){
+        cur.lines.push(line);
+      } else {
+        introLines.push(line);
+      }
+    }
+    if (cur) raw.push(cur);
+
+    // 简介：取第一个 --- 之前的内容（标题+说明），去掉 # H1
+    var cut = -1;
+    for (var j=0;j<introLines.length;j++){
+      if (/^---\s*$/.test(introLines[j])){ cut = j; break; }
+    }
+    var head = (cut>=0 ? introLines.slice(0,cut) : introLines)
+      .filter(function(l){ return !/^#\s+/.test(l); });
+    var result = [{title:'首页 · 简介', body: head.join('\n'), subs:[], home:true}];
+
+    raw.forEach(function(s){
+      var body = s.lines.join('\n');
+      var subs = [];
+      s.lines.forEach(function(l){
+        var sm = l.match(/^###\s+(.+?)\s*$/);
+        if (sm) subs.push(sm[1]);
+      });
+      result.push({title:s.title, body:body, subs:subs});
+    });
+    return result;
+  }
+
+  /* ---------- 构建左侧导航 ---------- */
+  function buildNav(){
+    var frag = document.createDocumentFragment();
+    sections.forEach(function(sec, i){
+      var item = document.createElement('div');
+      item.className = 'nav-item';
+      item.dataset.i = i;
+
+      var link = document.createElement('button');
+      link.type = 'button';
+      link.className = 'nav-link';
+      link.textContent = sec.title;
+      link.addEventListener('click', function(){ showSection(i, true); });
+      item.appendChild(link);
+
+      var subWrap = document.createElement('div');
+      subWrap.className = 'nav-subs';
+      sec.subs.forEach(function(sub, j){
+        var a = document.createElement('a');
+        a.textContent = sub;
+        a.addEventListener('click', function(){ jumpSub(i, j); });
+        subWrap.appendChild(a);
+      });
+      item.appendChild(subWrap);
+      frag.appendChild(item);
+    });
+    navEl.appendChild(frag);
+  }
+
+  /* ---------- 渲染某一章 ---------- */
+  function render(i){
+    var sec = sections[i];
+    var html;
+    if (typeof marked === 'undefined'){
+      html = '<pre>' + sec.body.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>';
+    } else {
+      html = marked.parse(sec.body || '');
+    }
+    if (sec.home){
+      html += '<div class="home-actions">'
+        + '<a class="btn" href="#s-1">开始阅读 →</a>'
+        + '<a class="btn ghost" href="https://ce.gtemc.cn/zh-Hans" target="_blank" rel="noopener">官方文档</a>'
+        + '</div>';
+    }
+    contentEl.innerHTML = '<h1>' + escapeHtml(sec.title) + '</h1>' + html;
+    // 给 h3 编号锚点
+    var h3s = contentEl.querySelectorAll('h3');
+    for (var k=0;k<h3s.length;k++){ h3s[k].id = 'sub-' + k; }
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ---------- 切换章节 ---------- */
+  function showSection(i, push){
+    if (i<0 || i>=sections.length) return;
+    current = i;
+    render(i);
+    mainEl.scrollTop = 0;
+
+    var items = navEl.querySelectorAll('.nav-item');
+    for (var k=0;k<items.length;k++){
+      items[k].classList.toggle('active', Number(items[k].dataset.i) === i);
+    }
+    // 把当前章滚动到导航可见区
+    var active = navEl.querySelector('.nav-item.active');
+    if (active) active.scrollIntoView({block:'nearest'});
+
+    prevBtn.classList.toggle('placeholder', i===0);
+    nextBtn.classList.toggle('placeholder', i===sections.length-1);
+    if (i>0) prevBtn.textContent = '← ' + sections[i-1].title;
+    if (i<sections.length-1) nextBtn.textContent = sections[i+1].title + ' →';
+
+    if (push && location.hash !== '#s-'+i) location.hash = 's-'+i;
+    closeSidebar();
+  }
+
+  function jumpSub(secI, subJ){
+    if (current !== secI) showSection(secI, true);
+    var target = document.getElementById('sub-' + subJ);
+    if (target) target.scrollIntoView();
+    closeSidebar();
+  }
+
+  /* ---------- 上一章 / 下一章 ---------- */
+  prevBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    if (current>0) showSection(current-1, true);
+  });
+  nextBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    if (current<sections.length-1) showSection(current+1, true);
+  });
+
+  /* ---------- hash 路由 ---------- */
+  function applyHash(){
+    var m = location.hash.match(/^#s-(\d+)(?:-(\d+))?$/);
+    if (m){
+      var secI = Number(m[1]);
+      var subJ = m[2] === undefined ? null : Number(m[2]);
+      if (secI>=0 && secI<sections.length){
+        showSection(secI, false);
+        if (subJ !== null){
+          var t = document.getElementById('sub-' + subJ);
+          if (t) setTimeout(function(){ t.scrollIntoView(); }, 50);
+        }
+        return;
+      }
+    }
+    showSection(0, false);
+  }
+  window.addEventListener('hashchange', applyHash);
+
+  /* ---------- 搜索 ---------- */
+  document.getElementById('search').addEventListener('input', function(e){
+    var q = e.target.value.trim().toLowerCase();
+    var items = navEl.querySelectorAll('.nav-item');
+    items.forEach(function(item){
+      var sec = sections[Number(item.dataset.i)];
+      var hay = (sec.title + ' ' + sec.subs.join(' ')).toLowerCase();
+      item.classList.toggle('hidden', q !== '' && hay.indexOf(q) === -1);
+    });
+  });
+
+  /* ---------- 深色模式 ---------- */
+  var themeBtn = document.getElementById('themeBtn');
+  function setTheme(t){
+    document.documentElement.dataset.theme = t;
+    themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+    try { localStorage.setItem('ce-wiki-theme', t); } catch(e){}
+  }
+  var saved = null;
+  try { saved = localStorage.getItem('ce-wiki-theme'); } catch(e){}
+  setTheme(saved || 'light');
+  themeBtn.addEventListener('click', function(){
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ---------- 手机端目录 ---------- */
+  function closeSidebar(){ document.body.classList.remove('sb-open'); }
+  document.getElementById('menuBtn').addEventListener('click', function(){
+    document.body.classList.add('sb-open');
+  });
+  document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+  /* ---------- 加载 ---------- */
+  fetch('content.txt')
+    .then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(function(md){
+      sections = parseSections(md);
+      buildNav();
+      applyHash();
+    })
+    .catch(function(err){
+      contentEl.innerHTML = '<h1>加载失败</h1><p>无法加载 content.txt：'
+        + escapeHtml(String(err.message || err))
+        + '。请刷新重试，或直接查看仓库里的 README。</p>';
+    });
+})();
+</script>
+</body>
+</html>
