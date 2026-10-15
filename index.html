@@ -178,7 +178,7 @@ body{
   </div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="marked.min.js"></script>
 <script>
 (function(){
   var navEl = document.getElementById('nav');
@@ -266,10 +266,9 @@ body{
     var sec = sections[i];
     var html;
     if (typeof marked === 'undefined'){
-      html = '<pre>' + sec.body.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre>';
-    } else {
-      html = marked.parse(sec.body || '');
+      throw new Error('marked.min.js 未加载，检查文件是否与 index.html 同目录');
     }
+    html = marked.parse(sec.body || '');
     if (sec.home){
       html += '<div class="home-actions">'
         + '<a class="btn" href="#s-1">开始阅读 →</a>'
