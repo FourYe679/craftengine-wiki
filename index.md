@@ -1,0 +1,2274 @@
+# CraftEngine 完整大白话 Wiki
+
+> 这份文档整合了官方文档（https://ce.gtemc.cn/zh-Hans）的所有内容，用大白话重写。从安装到高级配置，从物品到方块到家具到兼容性，全都有。照着做就行。
+
+---
+
+## 目录
+
+- [一、CraftEngine 是个啥](#一craftengine-是个啥)
+- [二、安装插件](#二安装插件)
+- [三、配置文件夹结构](#三配置文件夹结构)
+- [四、做第一个物品](#四做第一个物品)
+- [五、物品配置详解](#五物品配置详解)
+- [六、物品数据（Data）](#六物品数据data)
+- [七、物品设置（Settings）](#七物品设置settings)
+- [八、物品模型](#八物品模型)
+- [九、物品行为](#九物品行为)
+- [十、物品更新器](#十物品更新器)
+- [十一、给物品加自定义模型](#十一给物品加自定义模型)
+- [十二、做配方](#十二做配方)
+- [十三、做自定义方块](#十三做自定义方块)
+- [十四、方块设置](#十四方块设置)
+- [十五、方块状态](#十五方块状态)
+- [十六、方块行为一览](#十六方块行为一览)
+- [十七、方块实体渲染器](#十七方块实体渲染器)
+- [十八、家具系统](#十八家具系统)
+- [十九、装备系统](#十九装备系统)
+- [二十、音效配置](#二十音效配置)
+- [二十一、画](#二十一画)
+- [二十二、唱片机曲目](#二十二唱片机曲目)
+- [二十三、图像与字体](#二十三图像与字体)
+- [二十四、表情](#二十四表情)
+- [二十五、分类系统](#二十五分类系统)
+- [二十六、语言与国际化](#二十六语言与国际化)
+- [二十七、全局变量](#二十七全局变量)
+- [二十八、原版战利品覆盖](#二十八原版战利品覆盖)
+- [二十九、资源包托管](#二十九资源包托管)
+- [三十、YML 配置技巧](#三十yml-配置技巧)
+- [三十一、命令速查](#三十一命令速查)
+- [三十二、数据包兼容](#三十二数据包兼容)
+- [三十三、其他插件兼容性](#三十三其他插件兼容性)
+- [三十四、API 开发指南](#三十四api-开发指南)
+- [三十五、Skript 兼容](#三十五skript-兼容)
+- [三十六、PlaceholderAPI 兼容](#三十六placeholderapi-兼容)
+- [三十七、常见问题排查](#三十七常见问题排查)
+- [三十八、学习路线建议](#三十八学习路线建议)
+
+---
+
+## 一、CraftEngine 是个啥
+
+**一句话总结**：CraftEngine 是一个装在 **服务端** 的 Minecraft 插件，让你能添加自定义的物品、方块、家具、配方、画、音效、装备等，而 **玩家客户端不需要装任何模组**。
+
+### 核心能力
+
+- 创建全新的物品（带自定义模型、名字、描述、行为）
+- 创建全新的方块（带朝向、行为、掉落物、标签）
+- 创建家具（基于展示实体，不受方块网格限制）
+- 创建自定义配方（有序、无序、烧炼、切石、锻造、酿造）
+- 创建自定义装备（盔甲纹理、3D头盔）
+- 创建自定义画、唱片、音效、表情、字体图像
+- 与数据包无缝集成（自定义树木、矿脉、地形生成）
+- 资源包保护（付费版混淆防盗）
+
+### 底层原理
+
+CraftEngine 用类似 ViaBackwards 的思路，把自定义方块"伪装"成原版里空闲的方块状态（比如音符盒、绊线钩的某些状态），客户端不需要模组就能渲染。但服务端层面，它是真正注册了新方块，所以数据包的旋转、镜像等操作都不会出问题——这是和其他同类插件的**本质区别**。
+
+### 独家功能
+
+1. **不破坏原版方块行为**：音符盒、绊线等方块的原版机制不受影响
+2. **任意空闲方块状态做自定义方块**：在 `mappings.yml` 中映射即可
+3. **无缝集成数据包**：可在数据包中使用自定义方块生成树木、地形
+4. **资源包保护**（付费版）：高级混淆技术，Bandizip、JD-GUI 等提取工具彻底失败
+5. **客户端侧物品组件**（付费版）：动态自定义物品名称、描述、外观，可按玩家显示不同效果
+
+### 环境要求
+
+- 服务器核心：Paper（或 Folia、Pufferfish、Purpur 等 Paper 分支）
+- Java：JDK 21 或更高
+- Minecraft 版本：最低 1.20
+
+### 下载地址
+
+- 社区版（免费）：Modrinth 搜索 CraftEngine
+- 付费版：Polymart 或 爱发电（搜 XiaoMoMi）
+
+### 获取支持
+
+- 付费版用户：Discord 机器人验证进专属频道
+- 中国大陆付费版用户：QQ群 `1039968907`
+- AI 自助支持：[DeepWiki](https://deepwiki.com/Xiao-MoMi/craft-engine)
+- 开发者：`#api-help` 频道获取免费开发支持
+
+---
+
+## 二、安装插件
+
+1. 确保服务器是 Paper 核心，Java ≥ 21。
+2. 下载 CraftEngine 的 `.jar` 文件。
+3. 把 `.jar` 丢进服务器的 `plugins/` 文件夹。
+4. 启动服务器，自动生成 `plugins/CraftEngine/` 配置文件夹。
+5. 改完配置用 `/ce reload` 就行，不用重启。
+
+---
+
+## 三、配置文件夹结构
+
+```
+CraftEngine/
+├── cache/                    # 缓存，不用管
+├── generated/                # 插件自动生成的，不用管
+├── libs/                     # 依赖库，不用管
+├── resources/                # 👈 核心！你所有的自定义内容都放这里
+│   └── <包名>/               # 比如 tutorial、mypack
+│       ├── configuration/    # 👈 物品、方块、配方的 YML 配置
+│       ├── resourcepack/     # 👈 资源包（模型、纹理）
+│       └── pack.yml          # 包描述文件（新手可以先不建）
+├── translations/             # 翻译文件
+├── additional-real-blocks.yml
+├── commands.yml
+├── config.yml                # 全局配置
+└── mappings.yml              # 方块状态映射
+```
+
+**重点两个地方**：
+1. `resources/<包名>/configuration/` —— 写配置文件
+2. `resources/<包名>/resourcepack/` —— 放模型和纹理
+
+> 包名就是你的"命名空间"，比如 `tutorial`，所有物品 ID 都是 `tutorial:xxx`。只能用小写字母、数字、下划线、短横线和点。
+
+---
+
+## 四、做第一个物品
+
+### 第 1 步：建文件夹
+
+```
+resources/
+└── tutorial/                    # 包名
+    └── configuration/           # 配置文件夹
+        └── first_item.yml       # 配置文件
+```
+
+### 第 2 步：写最基础的配置
+
+```yaml
+items:
+  tutorial:diamond:
+    material: diamond
+```
+
+- `items:` —— 声明下面是物品配置
+- `tutorial:diamond:` —— 物品ID，格式 `包名:物品名`
+- `material: diamond` —— 基于原版钻石
+
+### 第 3 步：加载
+
+1. 保存文件
+2. `/ce reload`
+3. `/ce item get tutorial:diamond` 获取物品
+
+### 第 4 步：加名字和描述
+
+```yaml
+items:
+  tutorial:diamond:
+    material: diamond
+    data:
+      item-name: "<blue>闪瞎24K狗眼的钻石"
+      lore:
+        - "<!i><red>史诗物品"
+```
+
+- `data:` —— 物品数据区
+- `item-name:` —— 显示名，支持 MiniMessage 颜色
+- `lore:` —— 描述（鼠标悬停显示），列表格式
+- `<!i>` —— 取消斜体（Minecraft 默认 lore 是紫色斜体）
+
+### client-bound-data（付费版）
+
+想让名字/描述只在客户端显示、服务端不保存？用 `client-bound-data` 代替 `data`：
+
+```yaml
+items:
+  tutorial:diamond:
+    material: diamond
+    client-bound-data:
+      item-name: "<blue>闪瞎24K狗眼的钻石"
+      lore:
+        - "<!i><red>史诗物品"
+```
+
+⚠️ `client-bound-data` 意味着服务端没有真实数据。`max_damage`、`attribute_modifiers` 等改真实属性的组件**绝对不能**用 `client-bound-data`，否则同步出问题，甚至反作弊误判。
+
+> 💡 **MiniMessage 颜色速查**：
+> `<red>` `<blue>` `<green>` `<yellow>` `<gold>` `<aqua>` `<light_purple>` `<white>` `<gray>` `<dark_gray>`
+> `<#FF8C00>` 自定义十六进制颜色
+> `<bold>` 粗体，`<italic>` 斜体，`<underlined>` 下划线，`<!i>` 取消斜体
+
+---
+
+## 五、物品配置详解
+
+完整物品配置：
+
+```yaml
+items:
+  tutorial:toxic_sword:
+    material: diamond_sword          # 基础材质（必填）
+    custom-model-data: 1000          # 自定义模型数据
+    item-model: tutorial:toxic_sword # 物品模型ID（1.21.2+）
+    data:                            # 物品数据
+      item-name: "<#3CB371>剧毒之剑"
+      lore:
+        - "<!i><gray>一把淬了毒的剑"
+    client-bound-data:               # 客户端侧数据（可选，付费版）
+      item-name: "<#3CB371>剧毒之剑"
+    model:                           # 模型配置
+      type: minecraft:model
+      path: tutorial:item/toxic_sword
+    settings:                        # 物品设置
+      fuel-time: 300
+      tags:
+        - "minecraft:swords"
+    behavior:                        # 物品行为
+      type: block_item
+      block: tutorial:ruby_block
+    category: tutorial:weapons       # 分类
+```
+
+### 字段说明
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `material` | 是 | 基础模板，填原版物品英文名 |
+| `custom-model-data` | 否* | 正整数，同 material 的不同物品必须不同 |
+| `item-model` | 否 | 1.21.2+ 的模型ID，效率更高 |
+| `data` | 否 | 服务端真实数据（名字、描述、组件等） |
+| `client-bound-data` | 否 | 仅客户端显示的数据（付费版） |
+| `model` | 否 | 模型配置，见第八节 |
+| `settings` | 否 | 物品设置，见第七节 |
+| `behavior` | 否 | 物品行为，见第九节 |
+| `category` | 否 | 所属分类，见第二十五节 |
+| `oversized-in-gui` | 否 | GUI 中是否放大显示（1.21.6+，默认 true） |
+| `hand-animation-on-swap` | 否 | 切换时是否播放手部动画（默认 true） |
+| `client-bound-model` | 否 | 是否使用客户端侧模型（默认 config.yml 全局值） |
+
+> *配置模型时必须指定 `custom-model-data` 或 `item-model`。1.21.2+ 插件会自动用物品ID作为 `item-model` 值。
+
+---
+
+## 六、物品数据（Data）
+
+物品数据就是旧版本的 NBT，或 1.20.5+ 的物品组件。
+
+### 与其他插件兼容
+
+```yaml
+items:
+  default:example_item:
+    data:
+      external:
+        plugin: neigeitems
+        id: example_item
+```
+
+命名空间ID格式：`命名空间:路径`（如 `test_namespace:test/my_path`）。
+MMOItems 格式：`类型:ID`（如 `MATERIAL:IRON_INGOT`）。
+
+### 硬编码数据（插件定义的格式，跨版本兼容）
+
+| 字段 | 说明 |
+|------|------|
+| `item-name` | 物品默认名，无法铁砧修改，无法展示框显示 |
+| `custom-name` | 自定义名，类似铁砧设置的名字 |
+| `lore` | 描述信息列表 |
+| `tooltip-style` | 提示框样式 |
+| `enchantment` | 附魔 |
+| `max_damage` | 最大耐久 |
+| `attribute_modifiers` | 属性修饰符 |
+| `jukebox-playable` | 可播放的唱片曲目 |
+| `equippable` | 可装备组件（1.21.2+） |
+| `trim` | 盔甲纹饰 |
+| `painting_variant` | 画变体 |
+| `food` | 食物组件 |
+| `consumable` | 消耗品组件 |
+
+### 组件格式示例
+
+```yaml
+items:
+  default:topaz_sword:
+    material: golden_sword
+    data:
+      item-name: "<!i><#FF8C00>黄玉剑"
+      custom-name: "<!i><#FF8C00>黄玉剑"
+      lore:
+        - "<!i><gray>一把锋利的黄玉剑"
+      components:
+        minecraft:max_damage: 500
+        minecraft:attribute_modifiers:
+          modifiers:
+            - type: ATTACK_DAMAGE
+              amount: 8
+              operation: ADD_VALUE
+              slot: MAINHAND
+        minecraft:enchantments:
+          minecraft:sharpness: 5
+```
+
+---
+
+## 七、物品设置（Settings）
+
+`settings` 是插件处理的特殊机制，和 `data` 不同。
+
+### fuel_time（燃料时间）
+
+```yaml
+settings:
+  fuel-time: 100  # 单位：刻
+```
+
+### tags（标签）
+
+```yaml
+settings:
+  tags:
+    - "default:palm_logs"
+    - "minecraft:logs"
+    - "minecraft:logs_that_burn"
+```
+
+打标签后，物品可以参与所有用到该标签的原版配方。
+
+### equipment（装备）
+
+将装备配置应用到物品：
+
+```yaml
+settings:
+  equipment:
+    asset_id: default:topaz       # 装备资源ID（必填）
+    slot: head                     # head/chest/legs/feet/body/saddle
+    camera_overlay: 命名空间:路径   # 第一人称视角纹理遮罩
+    dispensable: true              # 可发射器装备
+    damage_on_hurt: true           # 受伤时盔甲耐久减少
+    swappable: true                # 可直接穿戴
+    equip_on_interact: true         # >=1.21.5 对生物交互时装备
+```
+
+### repairable（可修复）
+
+```yaml
+# 简单总开关
+settings:
+  repairable: true
+
+# 或具体场景
+settings:
+  repairable:
+    crafting_table: true
+    anvil_repair: false
+    anvil_combine: true
+```
+
+### anvil_repair_item（铁砧材料修复）
+
+```yaml
+settings:
+  anvil_repair_item:
+    - target: "#topaz_tools"       # 使用标签
+      amount: 20                   # 恢复20点耐久
+    - target:
+        - "minecraft:iron_pickaxe"
+        - "minecraft:shears"
+      percent: 0.25                # 恢复25%总耐久
+```
+
+### projectile（弹射物）
+
+创建自定义弹射物（三叉戟、箭、雪球等）：
+
+```yaml
+settings:
+  projectile:
+    display:
+      item: default:topaz_trident
+      translation: 0,0,0
+      rotation: 1,1,1,1
+      display_transform: NONE
+      scale: 0.5
+    sounds:
+      throw: minecraft:item.trident.throw
+      hit_entity: minecraft:item.trident.hit
+      hit_block: minecraft:item.trident.hit_ground
+    ignore_infinity_enchantment: false
+    pickupable: true
+    remove_on_hit: false
+    gravity: true
+    velocity: 1
+    damage: 10
+    pierce_level: 5
+```
+
+音效支持高级格式：
+
+```yaml
+sounds:
+  hit_block:
+    default: minecraft:item.trident.hit
+    overrides:
+      minecraft:stone: minecraft:item.trident.hit_stone
+      default:palm_log: minecraft:item.trident.hit_log
+```
+
+### 其他物品设置一览
+
+| 设置 | 说明 | 默认值 |
+|------|------|--------|
+| `renameable` | 是否可铁砧重命名 | true |
+| `dyeable` | 是否可工作台染色 | - |
+| `food` | 食物属性（nutrition + saturation） | - |
+| `consume_replacement` | 消耗后返回物品 | null |
+| `craft_remainder` | 合成剩余物品 | - |
+| `fuel_remainder` | 燃料消耗后返回物品 | - |
+| `invulnerable` | 不被指定伤害类型摧毁 | - |
+| `enchantable` | 是否可附魔台附魔 | true |
+| `compost_probability` | 堆肥成功率 | 0.5 |
+| `dye_color` | 染色配方中提供的颜色 | - |
+| `firework_color` | 烟火配方中提供的颜色 | - |
+| `hat_height` | 帽子高度（需 CustomNameplates） | - |
+| `keep_on_death_chance` | 死亡保留概率（0~1） | - |
+| `destroy_on_death_chance` | 死亡损毁概率（0~1） | - |
+| `drop_display` | 物品实体显示名称 | - |
+| `glow_color` | 发光颜色 | - |
+| `allowed_projectiles` | 弩/弓可装载的弹射物 | - |
+| `ingredient_substitute` | 合成配方中的替代物 | - |
+
+---
+
+## 八、物品模型
+
+### 简介
+
+1.21.4 起 Minecraft 支持更复杂的物品模型格式。旧版本插件会自动降级。
+
+### 模型类型
+
+```yaml
+items:
+  default:topaz_pickaxe:
+    model:
+      type: minecraft:model          # 默认类型，可省略
+      path: minecraft:item/custom/topaz_pickaxe
+      generation:
+        parent: "minecraft:item/handheld"
+        textures:
+          layer0: "minecraft:item/custom/topaz_pickaxe"
+```
+
+### 着色（Tints）
+
+给模型面上色（比如树叶、草地）：
+
+```yaml
+items:
+  default:palm_leaves:
+    model:
+      type: "minecraft:model"
+      path: "minecraft:item/custom/palm_leaves"
+      generation:
+        parent: "minecraft:block/custom/palm_leaves"
+      tints:
+        - type: "minecraft:constant"
+          value: -12012264
+```
+
+支持的着色类型：`minecraft:constant`、`minecraft:custom_model_data`、`minecraft:dye`、`minecraft:firework`、`minecraft:grass`、`minecraft:map_color`、`minecraft:potion`、`minecraft:team`
+
+颜色值支持十进制、RGB格式：
+```yaml
+value: 16711680
+value: [255, 0, 0]
+value: 255,0,0
+value: [1.0, 0.0, 0.0]
+```
+
+### 旧版模型（legacy-model）
+
+1.21.3 及更早版本的模型格式：
+
+```yaml
+items:
+  default:topaz_rod:
+    material: fishing_rod
+    legacy-model:
+      path: minecraft:item/custom/topaz_rod
+      overrides:
+        - path: minecraft:item/custom/topaz_rod_cast
+          predicate:
+            cast: 1
+```
+
+### 模板系统
+
+CraftEngine 提供强大的模板系统，批量生成相似配置：
+
+```yaml
+templates:
+  default:loot_table/crop:
+    pools:
+      - rolls: 1
+        entries:
+          - type: item
+            item: ${crop_item}
+```
+
+### 其他模型类型
+
+- `minecraft:composite` —— 组合多个模型
+- `minecraft:condition` —— 条件模型（根据耐久、CD等切换外观）
+- `minecraft:range_dispatch` —— 范围分发模型
+- `minecraft:select` —— 选择模型
+- `minecraft:special` —— 特殊模型（玩家头、旗帜等）
+
+---
+
+## 九、物品行为
+
+物品行为定义了物品的特殊功能。
+
+### 可用行为类型
+
+| 行为 | 说明 |
+|------|------|
+| `block_item` | 方块物品（放置后变成方块） |
+| `ceiling_block_item` | 天花板方块物品（像垂泪藤） |
+| `ground_block_item` | 地面方块物品 |
+| `wall_block_item` | 墙面方块物品（像火把） |
+| `double_high_block_item` | 双格高方块物品（像门） |
+| `multi_high_block_item` | 多格高方块物品 |
+| `furniture_item` | 家具物品 |
+| `liquid_collision_block_item` | 液体碰撞方块物品 |
+| `liquid_collision_furniture_item` | 液体碰撞家具物品 |
+| `compostable_item` | 可堆肥物品 |
+| `range_mining_item` | 范围挖掘物品 |
+
+### 示例
+
+```yaml
+items:
+  default:palm_log:
+    material: paper
+    custom-model-data: 1000
+    behavior:
+      type: block_item
+      block: default:palm_log
+```
+
+---
+
+## 十、物品更新器
+
+物品更新器用于更新服务器上存量物品的数据。默认所有触发器禁用，需在 `config.yml` 中启用：
+
+```yaml
+item:
+  update-triggers:
+    click-in-inventory: false
+    drop: false
+    pick-up: false
+```
+
+### 配置示例
+
+```yaml
+items:
+  default:my_sword:
+    material: wooden_sword
+    updater:
+      1:                          # 版本0→1的更新
+        type: apply_data
+        data:
+          item_name: 首次更新
+      2:                          # 版本1→2的更新
+        - type: apply_data
+          data:
+            lore:
+              - "再次更新"
+        - type: transmute
+          material: wooden_sword
+```
+
+### 更新器类型
+
+| 类型 | 说明 |
+|------|------|
+| `apply_data` | 应用 CraftEngine 支持的物品数据 |
+| `transmute` | 替换基础材质，保留所有组件/NBT |
+| `reset` | 重置到最新状态，保留指定组件 |
+
+> 💡 如果只更新视觉元素（CMD、模型、lore、名字），建议用 `client-bound-data` 而不是更新器。
+
+---
+
+## 十一、给物品加自定义模型
+
+### 11.1 命名空间ID
+
+格式 `命名空间:路径`，合法字符：小写字母、数字、下划线、短横线、点、斜杠。
+
+❌ 非法：`MyFirst:sword`（大写）、`minecraft:steel furnace`（空格）、`craftengine:happy$crafting`（$）
+✅ 合法：`tutorial:item/toxic_sword`、`abcd-efgh:1122.3344`
+
+### 11.2 资源包文件夹结构
+
+```
+resourcepack/
+└── assets/
+    └── tutorial/                    # 命名空间
+        ├── models/
+        │   ├── item/                 # 物品模型
+        │   │   └── toxic_sword.json
+        │   └── block/                # 方块模型
+        └── textures/
+            ├── item/                 # 物品纹理
+            │   └── toxic_sword.png
+            └── block/               # 方块纹理
+```
+
+> ⚠️ 纹理必须放 `textures/item/` 或 `textures/block/`，否则紫黑方块！
+
+### 11.3 方法一：BlockBench 做模型
+
+1. 打开 [BlockBench](https://www.blockbench.net/)
+2. 先保存（Ctrl+S）到正确目录
+3. 建立方体，贴纹理
+4. 保存
+
+生成的 JSON 关键部分：
+
+```json
+{
+  "textures": {
+    "0": "tutorial:item/toxic_sword",
+    "particle": "tutorial:item/toxic_sword"
+  },
+  "elements": [...]
+}
+```
+
+配置引用：
+
+```yaml
+items:
+  tutorial:toxic_sword:
+    material: diamond_sword
+    custom-model-data: 1000
+    data:
+      item-name: "<#3CB371>剧毒之剑"
+    model:
+      type: minecraft:model
+      path: tutorial:item/toxic_sword
+```
+
+### 11.4 方法二：CraftEngine 自动生成
+
+```yaml
+items:
+  tutorial:toxic_sword:
+    material: diamond_sword
+    custom-model-data: 1000
+    model:
+      path: tutorial:item/toxic_sword
+      generation:
+        parent: minecraft:item/handheld      # 父模型模板
+        textures:
+          layer0: tutorial:item/toxic_sword  # 纹理
+```
+
+常用父模型：
+- `minecraft:item/handheld` —— 手持物品（剑、工具），纹理 key 用 `layer0`
+- `minecraft:item/generated` —— 普通物品（苹果、纸），纹理 key 用 `layer0`
+- `minecraft:block/cube_all` —— 六面相同的方块，纹理 key 用 `all`
+- `minecraft:block/cube_column` —— 柱状方块（原木），纹理 key 用 `end` + `side`
+
+查看所有原版模型：[misode.github.io](https://misode.github.io/assets/model/) 或 [GitHub](https://github.com/InventivetalentDev/minecraft-assets/tree/1.21.8/assets/minecraft/models)
+
+### 11.5 generation 额外参数
+
+```yaml
+generation:
+  parent: minecraft:item/handheld
+  textures:
+    layer0: tutorial:item/toxic_sword
+  display:                          # 显示变换
+    gui:
+      scale: 2,2,2                  # GUI中放大2倍
+  gui_light: front                  # front或side，默认side
+```
+
+### 11.6 custom-model-data 说明
+
+同一个 `material` 的不同自定义物品，CMD 必须不同：
+
+```yaml
+items:
+  tutorial:toxic_sword:
+    material: diamond_sword
+    custom-model-data: 1000        # 不同！
+
+  tutorial:flame_sword:
+    material: diamond_sword
+    custom-model-data: 1001        # 不同！
+```
+
+不同 material 可以相同 CMD。1.21.2+ 可用 `item-model` 代替。
+
+### 11.7 纹理图集
+
+如需加载非 `block/` 和 `item/` 目录下的纹理，创建 `resourcepack/assets/minecraft/atlases/blocks.json`：
+
+```json
+{
+    "sources": [
+        { "type": "directory", "source": "custom", "prefix": "custom/" }
+    ]
+}
+```
+
+### 11.8 纹理尺寸要求
+
+- 模型纹理：宽高必须是 2 的幂（16、32、64、128）
+- 字体/GUI 纹理：可用任意尺寸
+- ❌ 不要把字体/GUI 纹理和模型纹理放在同一目录（会导致 mipmap 降级）
+
+---
+
+## 十二、做配方
+
+### 12.1 标签系统
+
+用 `#命名空间:标签` 引用标签，让物品参与原版配方：
+
+```yaml
+items:
+  tutorial:palm_planks:
+    material: paper
+    custom-model-data: 1004
+    settings:
+      tags:
+        - "minecraft:planks"
+        - "minecraft:wooden_tool_materials"
+```
+
+### 12.2 与其他插件的物品兼容
+
+先在 `config.yml` 添加物品源：
+
+```yaml
+recipe:
+  ingredient-sources:
+    - MythicMobs
+```
+
+然后映射外部物品：
+
+```yaml
+items:
+  mythicmobs:kingscrown:
+    material: golden_helmet
+    data:
+      external:
+        plugin: MythicMobs
+        id: KingsCrown
+```
+
+### 12.3 有序合成（shaped）
+
+```yaml
+recipes:
+  tutorial:topaz_shovel:
+    type: shaped
+    pattern:
+      - "A"
+      - "B"
+      - "B"
+    ingredients:
+      A: "tutorial:topaz"
+      B: "minecraft:stick"
+    result:
+      id: tutorial:topaz_shovel
+      count: 1
+```
+
+### 12.4 无序合成（shapeless）
+
+```yaml
+recipes:
+  tutorial:palm_planks:
+    type: shapeless
+    category: building          # building/redstone/equipment/misc
+    group: planks
+    ingredients:
+      - "tutorial:palm_log"
+    result:
+      id: tutorial:palm_planks
+      count: 4
+```
+
+### 12.5 烧炼配方（smelting/blasting/smoking/campfire_cooking）
+
+```yaml
+recipes:
+  tutorial:topaz_from_ore:
+    type: smelting              # 或 blasting / smoking / campfire_cooking
+    experience: 1.0
+    category: misc              # food/blocks/misc
+    group: topaz
+    time: 200                   # 刻，20刻=1秒
+    ingredient: "tutorial:topaz_ore"
+    result:
+      id: tutorial:topaz
+      count: 1
+```
+
+### 12.6 切石机配方（stonecutting）
+
+```yaml
+recipes:
+  tutorial:stonecutting_example:
+    type: stonecutting
+    group: topaz
+    ingredient: "minecraft:stone"
+    result:
+      id: tutorial:topaz
+      count: 1
+```
+
+> ⚠️ 切石机配方尽量别用自定义物品当原料，容易出客户端显示问题。
+
+### 12.7 锻造升级配方（smithing_transform）
+
+```yaml
+recipes:
+  tutorial:topaz_bow:
+    type: smithing_transform
+    template: tutorial:topaz_template    # 槽位1（可选）
+    base: minecraft:bow                   # 槽位2（必填）
+    addition: tutorial:topaz              # 槽位3（可选）
+    merge-components: true                # 默认 true
+    result:
+      id: tutorial:topaz_bow
+      count: 1
+```
+
+### 12.8 盔甲纹饰配方（smithing_trim）
+
+```yaml
+recipes:
+  tutorial:bolt_tool_trims:
+    type: smithing_trim
+    template: "minecraft:bolt_armor_trim_smithing_template"
+    base: "#minecraft:trimmable_tool"
+    addition: "#minecraft:trim_materials"
+    pattern: minecraft:bolt              # 1.21.5+
+```
+
+### 12.9 酿造配方（brewing，1.20.2+）
+
+```yaml
+recipes:
+  tea_art:tea:
+    type: brewing
+    ingredient: tea_art:tea_leaf
+    container: tea_art:cup
+    result:
+      id: tea_art:cup_of_tea
+      count: 1
+```
+
+### 12.10 结果后处理器
+
+合成结果可以追加数据（比如附魔）：
+
+```yaml
+result:
+  id: default:topaz_pickaxe
+  count: 1
+  post-processors:
+    - type: apply_data
+      data:
+        enchantment:
+          minecraft:efficiency: 5
+```
+
+### 12.11 视觉结果（付费版）
+
+防止玩家提前预知合成结果：
+
+```yaml
+result:
+  id: default:topaz_sword
+  count: 1
+  visual-result:
+    id: default:topaz_sword
+    count: 1
+    post-processors:
+      - type: apply_data
+        data:
+          remove-components:
+            - attribute_modifiers
+          lore:
+            - "<gray>攻击伤害 1~3"
+```
+
+### 12.12 函数与条件（付费版）
+
+合成时执行命令：
+
+```yaml
+recipes:
+  default:bench:
+    functions:
+      - type: command
+        command: say 1
+```
+
+条件控制：
+
+```yaml
+recipes:
+  default:bench:
+    conditions:
+      - type: permission
+        permission: recipe.unlock.bench
+```
+
+### 12.13 配方重载
+
+- `/ce reload recipe` —— 只重载配方
+- `/ce reload all` —— 重载全部
+- Folia 服务器只能用 `/ce reload recipe`
+- ⚠️ 重载数据包后必须重载配方，否则注册的配方失效
+
+---
+
+## 十三、做自定义方块
+
+### 13.1 简单方块
+
+```yaml
+blocks:
+  tutorial:ruby_block:
+    settings:
+      hardness: 5.0
+      resistance: 6.0
+    states:
+      default:
+        appearance:
+          state: "note_block:0"
+          model:
+            path: tutorial:block/ruby_block
+```
+
+### 13.2 有朝向的方块（原木）
+
+```yaml
+blocks:
+  tutorial:palm_log:
+    behavior:
+      type: strippable_block
+      stripped: tutorial:stripped_palm_log
+    settings:
+      hardness: 2.0
+      resistance: 2.0
+      burnable: true
+      sounds:
+        break: "minecraft:block.wood.break"
+        step: "minecraft:block.wood.step"
+        place: "minecraft:block.wood.place"
+      tags:
+        - minecraft:mineable/axe
+        - minecraft:logs
+    states:
+      properties:
+        axis:
+          type: axis
+          default: y
+      appearances:
+        axisY:
+          state: "note_block:0"
+          model:
+            path: tutorial:block/palm_log
+            generation:
+              parent: minecraft:block/cube_column
+              textures:
+                end: tutorial:block/palm_log_top
+                side: tutorial:block/palm_log
+        axisX:
+          state: "note_block:1"
+          model:
+            path: tutorial:block/palm_log_horizontal
+            generation:
+              parent: minecraft:block/cube_column_horizontal
+              textures:
+                end: tutorial:block/palm_log_top
+                side: tutorial:block/palm_log
+        axisZ:
+          state: "note_block:2"
+          model:
+            path: tutorial:block/palm_log_horizontal
+            generation:
+              parent: minecraft:block/cube_column_horizontal
+              textures:
+                end: tutorial:block/palm_log_top
+                side: tutorial:block/palm_log
+      variants:
+        axis=x:
+          appearance: axisX
+        axis=y:
+          appearance: axisY
+        axis=z:
+          appearance: axisZ
+    loot:
+      pools:
+        - rolls: 1
+          conditions:
+            - type: survives_explosion
+          entries:
+            - type: item
+              item: tutorial:palm_log
+```
+
+### 13.3 方块事件
+
+```yaml
+blocks:
+  tutorial:anvil_block:
+    events:
+      - on: right_click
+        functions:
+          - type: open_window
+            gui-type: anvil
+          - type: cancel_event
+        conditions:
+          - type: expression
+            expression: '!<arg:player.is_sneaking>'
+```
+
+---
+
+## 十四、方块设置
+
+`settings` 定义方块的基础属性，全部可选。
+
+### 完整示例
+
+```yaml
+blocks:
+  custom:all_settings_block:
+    settings:
+      hardness: 0.5                 # 硬度
+      resistance: 0.5               # 爆炸抗性
+      push_reaction: NORMAL         # 推动反应
+      map_color: 36                 # 地图颜色
+      burnable: false               # 可燃
+      fire_spread_chance: 0         # 火焰蔓延概率
+      burn_chance: 0                # 燃烧概率
+      replaceable: false             # 可替换
+      is_redstone_conductor: true    # 红石导体
+      is_suffocating: true           # 窒息
+      is_view_blocking: true         # 视线阻挡
+      sounds:
+        break: minecraft:block.deepslate.break
+        step: minecraft:block.deepslate.step
+        place: minecraft:block.deepslate.place
+        hit: minecraft:block.deepslate.hit
+        fall: minecraft:block.deepslate.fall
+      require_correct_tools: true    # 需要正确工具
+      correct_tools:
+        - minecraft:wooden_pickaxe
+      incorrect_tool_dig_speed: 0.3
+      tags:
+        - minecraft:mineable/pickaxe
+      instrument: basedrum           # 音符盒乐器
+      fluid_state: water             # 液体状态
+      luminance: 15                  # 亮度
+      can_occlude: false             # 遮挡
+      block_light: 0                # 方块光
+      friction: 0.7                  # 摩擦力
+      bounce_restitution: 0.0        # 弹性
+      jump_factor: 1.0               # 跳跃因子
+      speed_factor: 1.0              # 速度因子
+```
+
+---
+
+## 十五、方块状态
+
+### 15.1 两个核心概念
+
+- **视觉方块状态（客户端）**：玩家看到的原版方块状态（如某个音符盒状态）
+- **内部方块状态（服务端）**：真正存储和运算的状态
+
+`state` 或 `states` 只做一件事：为每个内部状态指定它在客户端显示的视觉状态。
+
+### 15.2 单状态方块
+
+```yaml
+state:
+  appearance:
+    state: "note_block:0"       # 视觉状态
+    model:
+      path: tutorial:block/ruby_block
+```
+
+### 15.3 多状态方块
+
+```yaml
+states:
+  properties:                    # 定义属性
+    axis:
+      type: axis
+      default: y
+  appearances:                   # 定义外观
+    axisY:
+      state: "note_block:0"
+      model:
+        path: tutorial:block/log
+    axisX:
+      state: "note_block:1"
+      model:
+        path: tutorial:block/log_h
+  variants:                      # 属性值→外观映射
+    axis=x:
+      appearance: axisX
+    axis=y:
+      appearance: axisY
+```
+
+### 15.4 属性类型
+
+| 类型 | 可选值 |
+|------|--------|
+| `boolean` | true / false |
+| `int` | 指定范围内整数 |
+| `string` | 预定义字符串集合 |
+| `direction` | east, south, west, north, up, down |
+| `horizontal_direction` | east, south, west, north |
+| `axis` | x, y, z |
+| `single_block_half` | top, bottom |
+| `double_block_half` | upper, lower |
+| `hinge` | left, right |
+| `slab_type` | top, bottom, double |
+| `stairs_shape` | straight, inner_left, inner_right, outer_left, outer_right |
+| `sofa_shape` | straight, inner_left, inner_right |
+| `anchor_type` | floor, wall, ceiling |
+
+### 15.5 硬编码属性名
+
+某些属性名有特殊行为：
+- `axis` —— 根据放置面决定轴向
+- `waterlogged` —— 是否含水
+- `facing` —— 放置方向自动适应
+- `facing_clockwise` —— 放置时旋转90度
+- `rotation` —— 高精度旋转（0~7 或 0~15）
+
+---
+
+## 十六、方块行为一览
+
+方块行为定义方块的独特机制。可组合多个行为（复合行为）。
+
+### 指定行为
+
+```yaml
+blocks:
+  default:fairy_flower:
+    behavior:
+      type: bush_block
+      bottom_block_tags:
+        - minecraft:dirt
+```
+
+### 复合行为
+
+```yaml
+blocks:
+  default:gunpowder_block:
+    behaviors:
+      - type: concrete_powder_block    # 遇水凝固
+        solid_block: default:solid_gunpowder_block
+      - type: falling_block             # 像沙子下落
+```
+
+### 全部行为类型
+
+| 行为 | 说明 |
+|------|------|
+| `attached_stem_block` | 附着茎方块 |
+| `bouncing_block` | 弹跳方块 |
+| `budding_block` | 芽方块（紫水晶母岩） |
+| `bush_block` | 灌木方块 |
+| `button_block` | 按钮方块 |
+| `change_over_time_block` | 随时间变化方块 |
+| `chime_block` | 钟琴方块 |
+| `concrete_powder_block` | 混凝土粉末 |
+| `crop_block` | 农作物 |
+| `decay_block` | 腐化方块 |
+| `directional_attached_block` | 方向附着方块 |
+| `display_item_block` | 展示物品方块 |
+| `door_block` | 门 |
+| `double_high_block` | 双格高方块 |
+| `drawer_block` | 抽屉方块 |
+| `drop_experience_block` | 掉经验方块 |
+| `face_attached_horizontal_directional_block` | 面附着水平方向方块 |
+| `falling_block` | 重力方块 |
+| `fence_block` | 栅栏 |
+| `fence_gate_block` | 栅栏门 |
+| `grass_block` | 草方块 |
+| `hangable_block` | 可悬挂方块 |
+| `hanging_block` | 悬挂方块 |
+| `item_frame_block` | 物品展示框 |
+| `lamp_block` | 灯方块 |
+| `leaves_block` | 树叶 |
+| `liquid_flowable_block` | 液体可流方块 |
+| `multi_high_block` | 多格高方块 |
+| `near_liquid_block` | 近液方块 |
+| `on_liquid_block` | 液面方块 |
+| `pressure_plate_block` | 压力板 |
+| `sapling_block` | 树苗 |
+| `seat_block` | 可坐方块 |
+| `simple_particle_block` | 粒子方块 |
+| `simple_storage_block` | 存储方块 |
+| `slab_block` | 台阶 |
+| `snowy_block` | 雪覆盖方块 |
+| `sofa_block` | 沙发 |
+| `spreading_block` | 蔓延方块 |
+| `stackable_block` | 可堆叠方块 |
+| `stairs_block` | 楼梯 |
+| `stem_block` | 茎方块 |
+| `strippable_block` | 可剥皮方块 |
+| `sturdy_base_block` | 坚固基础方块 |
+| `surface_spreading_block` | 表面蔓延方块 |
+| `tint_source_block` | 染色源方块 |
+| `toggleable_lamp_block` | 可开关灯方块 |
+| `trapdoor_block` | 活板门 |
+| `vertical_crop_block` | 垂直农作物 |
+| `wall_torch_particle_block` | 墙火把粒子方块 |
+
+---
+
+## 十七、方块实体渲染器
+
+当方块变体不够用时，可以用展示实体实现近乎无限的自定义方块。
+
+### 基本用法
+
+```yaml
+# 单个渲染元素
+entity_renderer:
+  type: item_display
+  item: default:sofa
+
+# 多个渲染元素
+entity_renderer:
+  - type: item_display
+    item: default:sofa
+  - type: text_display
+    text: 沙发
+```
+
+类型自动检测：包含 `text` → `text_display`，包含 `item` → `item_display`。
+
+### 通用参数
+
+```yaml
+entity_renderer:
+  type: item_display
+  item: default:sofa
+  translation: 0,0.5,0        # 偏移量
+  position: 0.5,0.5,0.5       # 相对位置
+  scale: 1,1,1                # 缩放
+  rotation: 0,0,0             # 旋转
+  billboard: FIXED            # FIXED/VERTICAL/CENTER
+  brightness: 15              # 亮度
+  view_range: 1.0             # 视距
+  shadow_radius: 0.0          # 阴影半径
+  glow: false                 # 发光
+```
+
+---
+
+## 十八、家具系统
+
+家具使用真正的实体模式，不受方块网格限制。
+
+> ⚠️ 重载插件不会影响已放置的家具！必须重启服务器或重载区块。
+
+### 完整配置
+
+```yaml
+furniture:
+  default:bench:
+    settings:
+      item: default:bench
+      hit_times: 0                    # 击打次数，0=一击破坏
+      sounds:
+        break: minecraft:block.bamboo_wood.break
+        place: minecraft:block.bamboo_wood.place
+    placement:
+      ground:
+        rules:
+          rotation: EIGHT             # ANY/FOUR/EIGHT/SIXTEEN/NORTH/EAST/WEST/SOUTH
+          alignment: CENTER           # ANY/CENTER/HALF/QUARTER/CORNER
+        elements:
+          - item: default:bench
+            display-transform: NONE
+            billboard: FIXED
+            position: 0.5,0,0
+            translation: 0,0.5,0
+        hitboxes:
+          - position: 0,0,0
+            width: 1
+            height: 1
+            interactive: true
+            seats:
+              - 0,0,-0.1 0
+    loot:
+      template: loot_table:normal
+      arguments:
+        item: default:bench
+```
+
+### 家具变体
+
+至少定义一个变体。默认 `furniture_item` 行为根据点击面选择变体：顶面→`ground`，底面→`ceiling`，侧面→`wall`。
+
+### 家具行为
+
+| 行为 | 说明 |
+|------|------|
+| `display_item_furniture` | 展示物品家具 |
+| `glowing_furniture` | 发光家具 |
+| `simple_storage_furniture` | 存储家具 |
+
+### 家具设置
+
+| 设置 | 说明 | 默认值 |
+|------|------|--------|
+| `item` | 对应物品 | 家具ID |
+| `hit_times` | 击打破坏次数 | 0 |
+| `sounds` | 音效 | null |
+| `adventure_mode_breaking` | 冒险模式可破坏 | false |
+
+> ⚠️ 想要坚硬或发光的家具请用方块，不要用家具！Minecraft 不允许实体发出真实亮度。
+
+---
+
+## 十九、装备系统
+
+### 两种创建方式
+
+1. **基于组件**（1.21.2+ 推荐）
+2. **基于盔甲纹饰**（1.20+）
+
+### 基于组件
+
+```yaml
+equipments:
+  default:topaz:
+    type: component
+    humanoid: "minecraft:topaz"              # -> assets/minecraft/textures/entity/equipment/humanoid/topaz.png
+    humanoid-leggings: "minecraft:topaz"     # -> .../humanoid_leggings/topaz.png
+```
+
+支持的模型类型：`humanoid`、`humanoid-leggings`、`wings`、`wolf-body`、`horse-body`、`llama-body`、各种 `saddle`、`happy-ghast-body`
+
+可染色：
+
+```yaml
+equipments:
+  custom:leather_armor:
+    type: component
+    humanoid:
+      texture: "minecraft:leather"
+      dyeable:
+        color-when-undyed: -6265536
+```
+
+### 基于盔甲纹饰（1.20+）
+
+```yaml
+equipments:
+  default:topaz:
+    type: trim
+    humanoid: minecraft:entity/equipment/humanoid/topaz
+    humanoid-leggings: minecraft:entity/equipment/humanoid_leggings/topaz
+```
+
+> ⚠️ 仅支持 `humanoid` 和 `humanoid-leggings`，且后续无法再接受额外纹饰。
+
+### 3D 头盔原理
+
+盔甲类物品天生带 `equippable` 组件中的 `asset_id`，会使用硬编码盔甲渲染器。要显示 3D 物品模型：
+
+**方案1（1.21.2+）**：重写 equippable 组件，移除 asset_id
+```yaml
+items:
+  default:my_3d_helmet:
+    material: diamond_helmet
+    data:
+      equippable:
+        slot: head
+```
+
+**方案2（1.20+）**：用 client-bound-material
+```yaml
+items:
+  default:my_3d_helmet:
+    material: diamond_helmet
+    client-bound-material: paper
+```
+
+---
+
+## 二十、音效配置
+
+```yaml
+sounds:
+  minecraft:custom_block.place:
+    replace: false
+    subtitle: subtitles.custom_block.place
+    sounds:
+      - "block/custom_block_1"
+
+  minecraft:custom_ambient.custom_biome:
+    replace: false
+    subtitle: subtitles.custom_ambient.custom_biome
+    sounds:
+      - name: "ambient/custom_biome_1"
+        volume: 0.4
+        weight: 3
+      - name: "ambient/custom_biome_2"
+        volume: 0.4
+        weight: 7
+        stream: false
+        attenuation-distance: 16
+        preload: false
+        type: "file"
+```
+
+---
+
+## 二十一、画
+
+```yaml
+paintings:
+  default:momi:
+    width: 1                       # 1~16，默认1
+    height: 1                      # 1~16，默认1
+    asset_id: default:momi         # -> assets/<命名空间>/textures/painting/<路径>.png
+    title: <lang:painting.default.momi.title>      # 1.21.2+
+    author: <lang:painting.default.momi.author>    # 1.21.2+
+    show_in_op_tab: false          # 是否在管理员标签页显示
+```
+
+物品上使用：
+
+```yaml
+items:
+  default:momi_painting:
+    material: painting
+    data:
+      painting_variant: default:momi
+```
+
+> ⚠️ 画注册后不可变，需重新进入服务器才能应用修改。
+
+---
+
+## 二十二、唱片机曲目
+
+```yaml
+jukebox-songs:
+  default:credits_music:
+    sound: minecraft:music.credits
+    length: 100.0                  # 音乐时长（秒）
+    description: "Credits"
+    comparator-output: 15          # 比较器输出信号强度
+    range: 32                     # 可听范围
+```
+
+物品上使用：
+
+```yaml
+items:
+  default:music_stick:
+    material: stick
+    data:
+      jukebox-playable: default:credits_music
+```
+
+> ⚠️ 需重启服务器才能生效。修改命名空间ID可实时注册新曲目。
+
+---
+
+## 二十三、图像与字体
+
+### 图像
+
+图像通过字符替换系统渲染。配置自定义图片：
+
+```yaml
+images:
+  internal:item_browser:
+    height: 140                    # 必须 >= ascent
+    ascent: 18
+    font: minecraft:internal
+    file: minecraft:font/gui/custom/item_browser.png
+    char: '\ub000'                # 或直接写字符 char: '我'
+```
+
+多字符位图：
+
+```yaml
+images:
+  default:icons:
+    height: 10
+    ascent: 9
+    font: minecraft:icons
+    file: minecraft:font/image/icons.png
+    chars:
+      - '\ub000\ub001'
+      - '\ub002\ub003'
+```
+
+游戏中预览：
+
+```
+/tellraw @p {"text":"\ub000","font":"minecraft:icons"}
+```
+
+在其他插件中使用：`<image:命名空间:路径>` 或 `<image:命名空间:路径:行:列>`
+
+### 字体
+
+**TTF 字体**：在 `assets/<命名空间>/font/default.json` 创建：
+
+```json
+{
+  "providers": [
+    {
+      "type": "ttf",
+      "file": "minecraft:custom_font.ttf",
+      "oversample": 10,
+      "size": 11
+    }
+  ]
+}
+```
+
+**位图字体**：参考 Minecraft Wiki。
+
+**Unihex 字体**：参考 Minecraft Wiki。
+
+在 MiniMessage 中使用：`<font:namespace:font_name>文本</font>`
+
+---
+
+## 二十四、表情
+
+```yaml
+emoji:
+  default:time:
+    permission: emoji.time
+    content: "<white><arg:emoji></white>"
+    image: "default:icons:0:0"
+    keywords:
+      - ":time:"
+```
+
+- `<arg:emoji>` —— 返回表情的图像表示
+- `<arg:keyword>` —— 返回首个可用关键词
+
+高级示例（显示坐标）：
+
+```yaml
+emoji:
+  default:emoji_location:
+    permission: emoji.location
+    content:
+      - <hover:show_text:'使用<yellow>"<arg:keyword>"</yellow>来发送表情"<arg:emoji>"'>
+      - <!shadow><white><arg:emoji></white></!shadow>
+      - "<bold>当前坐标：<papi:player_x>,<papi:player_y>,<papi:player_z></bold>"
+      - </hover>
+    image: "default:icons:0:0"
+    keywords:
+      - ":pos:"
+```
+
+> 需要 Paper 现代聊天组件 API。已知兼容聊天插件：TrChat。
+
+---
+
+## 二十五、分类系统
+
+`category` 用于 `/ce` 菜单中管理物品排列和分类。
+
+```yaml
+categories:
+  default:palm_tree:
+    name: "<!i><green><i18n:category.palm_tree></green>"
+    lore: []
+    hidden: false                  # 是否隐藏（子分类需设 true）
+    priority: 1                   # 数值越小优先级越高
+    icon: default:palm_log
+    conditions:
+      - type: permission
+        permission: category.default.palm_tree
+    list:
+      - default:palm_sapling
+      - default:palm_leaves
+      - default:palm_log
+      # all-items: true           # 显示所有物品
+```
+
+子分类用 `#` 前缀：
+
+```yaml
+categories:
+  default:main:
+    priority: 1
+    name: "<!i><white>主分类</white>"
+    icon: default:topaz
+    list:
+      - "#default:palm_tree"      # 引用子分类
+      - "#default:topaz"
+  default:palm_tree:
+    hidden: true                   # 子分类设为隐藏
+    icon: default:palm_log
+    list:
+      - default:palm_sapling
+      - default:palm_log
+```
+
+界面操作：
+- Shift + 左键：获取单个
+- Shift + 右键：获取一组
+- 中键：快速拾取一组
+
+---
+
+## 二十六、语言与国际化
+
+### 语言（客户端本地化）
+
+```yaml
+lang:
+  en_us:
+    item.custom.palm_leaves: Palm Leaves
+    item.custom.palm_log: Palm Log
+  zh_cn:
+    item.custom.palm_leaves: 棕榈树叶
+    item.custom.palm_log: 棕榈原木
+  all:                             # 覆盖所有语言
+    container.inventory: ""
+```
+
+在物品名中使用：`<lang:item.custom.palm_log>`
+
+### 方块名称翻译
+
+用 `block_name:` 前缀：
+
+```yaml
+lang:
+  en_us:
+    block_name:default:chinese_lantern: Chinese Lantern
+  zh_cn:
+    block_name:default:chinese_lantern: 灯笼
+```
+
+### 国际化（服务端本地化）
+
+```yaml
+i18n:
+  en:
+    item.chinese_lantern: "Chinese Lantern"
+    item.bench: "Bench"
+  zh_cn:
+    item.chinese_lantern: "灯笼"
+    item.bench: "长椅"
+```
+
+在物品名中使用：`<i18n:item.chinese_lantern>`
+
+---
+
+## 二十七、全局变量
+
+可在任意上下文中访问的变量：
+
+```yaml
+global_variables:
+  test: "<!i><#FF8C00><arg:0>的<arg:1>"
+```
+
+使用：
+
+```yaml
+items:
+  default:topaz_rod:
+    client_bound_data:
+      item_name: "<global:test:'<arg:player.name>':'<i18n:item.topaz_rod>'>"
+```
+
+在其他插件中使用（数据包级文本替换，不干预插件逻辑）：
+
+```
+# 其他插件的全息图配置
+line: "<global:coin_without_shadow> 我的金币: %vault_eco_balance%"
+```
+
+---
+
+## 二十八、原版战利品覆盖
+
+```yaml
+vanilla-loots:
+  minecraft:grass_loot:
+    type: block                    # 或 entity
+    target: "minecraft:grass"     # 或精确方块状态列表
+    override: false                # 是否覆盖原版
+    loot:
+      # ... 战利品表配置
+```
+
+可指定精确方块状态：
+
+```yaml
+vanilla-loots:
+  minecraft:wheat_loot:
+    type: block
+    target:
+      - minecraft:wheat[age=0]
+      - minecraft:wheat[age=1]
+    override: false
+    loot:
+      # ...
+```
+
+---
+
+## 二十九、资源包托管
+
+### 本地测试
+
+直接 `/ce reload all`，自动打包发送。
+
+### 配置位置
+
+`config.yml` 中的 `resource-pack.delivery.hosting`
+
+### 无托管
+
+```yaml
+resource-pack:
+  delivery:
+    hosting:
+      - type: "none"
+```
+
+### 自托管
+
+免费，适合测试。不适合生产环境（占用服务器带宽）。
+
+```yaml
+resource-pack:
+  delivery:
+    hosting:
+      - type: "self"
+        ip: "你服务器的IP"
+        port: 8163
+        protocol: "http"
+        deny_non_minecraft_request: true
+        one_time_token: true
+        strict_validation: false
+        rate_limiting:
+          max_bandwidth_per_second: 5000000    # 5MB/s
+          min_download_speed_per_player: 50000 # 50KB/s
+          qps_per_ip: 5/60                     # 每60秒5次
+```
+
+可用完整 URL 避免 IP 显示：
+```yaml
+- type: "self"
+  url: "https://mydomain.com:8163/"
+```
+
+> ⚠️ 没有 SSL 证书不要用 https。
+
+### Lobfile（免费，用户友好）
+
+1. 访问 https://lobfile.com/ 注册
+2. Account → Settings → Copy API Key
+
+```yaml
+- type: "lobfile"
+  api_key: "abcdefghijkl"
+  use_environment_variables: false
+```
+
+环境变量：`CE_LOBFILE_API_KEY`
+
+### 简单存储服务 S3（付费，高级）
+
+```yaml
+- type: s3
+  endpoint: ""
+  bucket: ""
+  access-key-id: ""
+  access-key-secret: ""
+  protocol: "https"
+  path-style: false
+  region: "auto"
+  upload-path: "server_resource_pack.zip"
+  use-legacy-signature: true
+  validity: 10                    # 令牌有效期（秒），需校准时钟
+  cdn:                             # 可选 CDN
+    domain: ""
+    protocol: "https"
+  rate-map:                        # 可限速
+    max-requests: 5
+    reset-interval: 20
+  proxy:                           # 可选代理
+    host: "127.0.0.1"
+    port: 7890
+    scheme: "http"
+```
+
+环境变量：`CE_S3_ACCESS_KEY_ID`、`CE_S3_ACCESS_KEY_SECRET`
+
+### OneDrive
+
+```yaml
+- type: onedrive
+  client_id: ""
+  client_secret: ""
+  refresh_token: ""
+  upload_path: "server_resource_pack.zip"
+```
+
+环境变量：`CE_ONEDRIVE_CLIENT_ID`、`CE_ONEDRIVE_CLIENT_SECRET`、`CE_ONEDRIVE_REFRESH_TOKEN`
+
+配置教程：需要 Azure 应用注册，详见官方文档。
+
+### Dropbox
+
+```yaml
+- type: dropbox
+  app_key: ""
+  app_secret: ""
+  refresh_token: ""
+  upload_path: "server_resource_pack.zip"
+```
+
+环境变量：`CE_DROPBOX_APP_KEY`、`CE_DROPBOX_APP_SECRET`、`CE_DROPBOX_REFRESH_TOKEN`
+
+### OpenList（AList 社区分支）
+
+```yaml
+- type: openlist
+  api_url: "http://localhost:5244"
+  username: "admin"
+  password: "your_password"
+  upload_path: "/目录名称/server_resource_pack.zip"
+  disable_upload: false
+  # file_password: ""
+  # otp_code: ""
+```
+
+环境变量：`CE_OPENLIST_USERNAME`、`CE_OPENLIST_PASSWORD`、`CE_OPENLIST_FILE_PASSWORD`
+
+> ⚠️ AList 已被出售并存在投毒风险，建议迁移到 OpenList。
+
+### Gitlab
+
+```yaml
+- type: gitlab
+  gitlab_url: ""
+  access_token: ""
+  project_id: ""
+```
+
+环境变量：`CE_GITLAB_ACCESS_TOKEN`
+
+> ⚠️ 根据 GitLab 服务条款，不能使用 GitLab 官方服务器分发内容，必须自建。
+
+### 外部托管
+
+```yaml
+- type: external
+  url: ""
+  uuid: ""        # 可选
+  sha1: ""        # 可选
+```
+
+将资源包上传到外部服务器，填入 URL/UUID/SHA1。需手动维护更新。
+
+---
+
+## 三十、YML 配置技巧
+
+### 30.1 缩进
+
+用空格不用 Tab，同级要对齐。
+
+### 30.2 区块标识符 `#`
+
+一个文件里多个同类配置用 `#数字` 区分：
+
+```yaml
+items#0:
+  tutorial:helmet:
+    material: iron_helmet
+
+blocks:
+  tutorial:ore:
+    ...
+
+items#1:
+  tutorial:boots:
+    material: iron_boots
+```
+
+### 30.3 区块分隔符 `::`
+
+嵌套键写成一行：
+
+```yaml
+# 等价
+key::subkey::nested_key: value
+
+key:
+  subkey:
+    nested_key: value
+```
+
+### 30.4 版本条件 `$$`
+
+```yaml
+material: trident
+client-bound-material:
+  $$1.20.1~1.21.1: bow
+  $$1.21.2~1.21.3: honey_bottle
+```
+
+格式：`$$1.21.4`（固定）、`$$1.20.1~1.21.4`（范围）、`$$>=1.21.4`/`$$<1.21.8`（比较）
+
+---
+
+## 三十一、命令速查
+
+| 命令 | 作用 |
+|------|------|
+| `/ce reload` | 重载配置（物品、方块等） |
+| `/ce reload all` | 重载配置 + 重新打包发送资源包 |
+| `/ce reload recipe` | 只重载配方 |
+| `/ce item get <ID>` | 获取指定物品 |
+| `/ce block get <ID>` | 获取指定方块物品 |
+
+---
+
+## 三十二、数据包兼容
+
+CraftEngine 注册的方块可在数据包中使用。
+
+### 方块状态提供器
+
+命名空间从 `minecraft` 变为 `craftengine`：
+
+```json
+{
+  "type": "minecraft:tree",
+  "config": {
+    "trunk_provider": {
+      "type": "craftengine:simple_state_provider",
+      "state": {
+        "Name": "default:palm_log",
+        "Properties": { "axis": "y" }
+      }
+    },
+    "foliage_provider": {
+      "type": "craftengine:simple_state_provider",
+      "state": {
+        "Name": "default:palm_leaves",
+        "Properties": { "distance": "7", "persistent": "false" }
+      }
+    }
+  }
+}
+```
+
+支持类型：`craftengine:simple_state_provider`、`craftengine:weighted_state_provider`、`craftengine:rotated_block_provider`、`craftengine:randomized_int_state_provider`
+
+简写：`"state": "default:palm_wood[axis=z]"`
+
+### 已配置地物
+
+`craftengine:simple_block` 解决多状态方块的放置问题。
+
+### 战利品
+
+```json
+{
+  "type": "minecraft:fishing",
+  "pools": [
+    {
+      "entries": [
+        {
+          "type": "craftengine:item",
+          "name": "default:palm_log",
+          "weight": 60
+        }
+      ]
+    }
+  ]
+}
+```
+
+> ⚠️ 某些场景下硬编码限制导致不能直接使用 CraftEngine 命名空间ID，需用内部真实方块ID（如 `craftengine:custom_0`）。
+
+---
+
+## 三十三、其他插件兼容性
+
+### Paper 反矿透
+
+原生支持，填入自定义方块的真实ID：
+
+```yaml
+anticheat:
+  anti-xray:
+    enabled: false
+    engine-mode: 1
+    hidden-blocks:
+      - copper_ore
+      - craftengine:custom_0
+      - craftengine:custom_1
+```
+
+### BlueMap
+
+1. 安装 BlueMap
+2. `config.yml` 中 `resource-pack.map-plugin-compatibility.enable` = true
+3. `resource-pack.map-plugin-compatibility.path` = `../BlueMap/packs/craftengine_resource_pack.zip`
+4. `chunk-system.restore-vanilla-blocks-on-chunk-unload` = false
+5. `/ce reload all`
+6. `/bluemap purge <map>`
+
+### 支持的外部物品来源
+
+AzureFlow、CustomFishing、EcoArmor、EcoCrates、EcoItems、EcoMobs、EcoPets、EcoScrolls、ExecutableItems、HeadDatabase、HMCCosmetics、ItemsAdder、MagicGem、MMOItems、MythicMobs、NeigeItems、Nexo、Nova、Oraxen、PxRpg、Ratziel、Reforges、Sertraline、Slimefun、StatTrackers、SXItem、Talismans、Zaphkiel
+
+### MythicMobs 兼容
+
+在 `config.yml` 添加物品源后映射：
+
+```yaml
+items:
+  mythicmobs:kingscrown:
+    material: golden_helmet
+    data:
+      external:
+        plugin: MythicMobs
+        id: KingsCrown
+```
+
+命名规则：插件名小写 + `:` + 物品ID小写。如 `MythicMobs` 的 `MySword` → `mythicmobs:mysword`
+
+---
+
+## 三十四、API 开发指南
+
+### 依赖
+
+**Gradle (Kotlin)**:
+```kotlin
+repositories {
+    maven("https://repo.momirealms.net/releases/")
+    // 国内镜像：maven("https://repo-momi.gtemc.cn/releases/")
+}
+dependencies {
+    compileOnly("net.momirealms:craft-engine-core:{version}")
+    compileOnly("net.momirealms:craft-engine-bukkit:{version}")
+}
+```
+
+**Maven**:
+```xml
+<repositories>
+    <repository>
+        <id>momirealms-repo</id>
+        <url>https://repo.momirealms.net/releases/</url>
+    </repository>
+</repositories>
+<dependencies>
+    <dependency>
+        <groupId>net.momirealms</groupId>
+        <artifactId>craft-engine-core</artifactId>
+        <version>{version}</version>
+        <scope>provided</scope>
+    </dependency>
+</dependencies>
+```
+
+在 `plugin.yml` 添加：
+```yaml
+softdepend:
+  - CraftEngine
+```
+
+### 开发规范
+
+- 新类型标识符：小写加下划线（`my_plugin:test_function`）
+- 配置参数键：用连字符（`send-to-all: true`）
+- 方块事件：监听 Bukkit 事件（如 `BlockBreakEvent`），用 `CraftEngineBlocks` 转换
+- 注册时使用 `BlockBehaviors`、`ItemBehaviors` 等常量类
+
+> 仅 `api` 包下的内容是稳定的。参考实现：[GitHub - craft-engine-blocks](https://github.com/jhqwqmc/craft-engine-blocks/)
+
+---
+
+## 三十五、Skript 兼容
+
+需要 Skript 2.15.0+。
+
+### 事件
+
+```skript
+# 破坏/放置自定义方块
+on break of ce block default:palm_log[axis=y]:
+    send "你破坏了自定义方块！" to event-player
+
+on place of custom furniture default:chinese_lantern:
+    send "你放置了自定义家具！" to event-player
+
+# 点击
+on right-click of craft-engine on default:chinese_lantern:
+    send "你点击了自定义方块！" to event-player
+
+# CraftEngine 加载
+on craft-engine loaded:
+    send "CraftEngine 已加载" to console
+```
+
+### 条件
+
+```skript
+if event-player's tool is a custom item:
+    send "你正在使用自定义物品" to event-player
+
+if event-block is custom block:
+    send "你破坏了自定义方块" to event-player
+
+if {_entity} is a ce furniture:
+    send "这是家具" to event-player
+```
+
+### 表达式
+
+```skript
+set {_item} to custom item with namespace id "default:topaz"
+set {_itemId} to craft-engine item id of player's tool
+set {_blockId} to event-block's ce block id
+set {_furnitureId} to {_entity}'s craft-engine furniture id
+```
+
+### 效果
+
+```skript
+place custom block default:palm_log[axis=x] at location of the player
+place furniture "default:bench" at location of player
+remove craft-engine furniture target entity
+```
+
+---
+
+## 三十六、PlaceholderAPI 兼容
+
+### 图片占位符
+
+| 占位符 | 说明 |
+|--------|------|
+| `%image_mm_<命名空间>:<路径>:[行]:[列]%` | MiniMessage 格式图片 |
+| `%image_md_<命名空间>:<路径>:[行]:[列]%` | MineDown 格式图片 |
+| `%image_raw_<命名空间>:<路径>:[行]:[列]%` | 原始图片字符 |
+
+### 偏移占位符
+
+| 占位符 | 说明 |
+|--------|------|
+| `%shift_mm_<数值>%` | MiniMessage 偏移字符 |
+| `%shift_md_<数值>%` | MineDown 偏移字符 |
+| `%shift_raw_<数值>%` | 原始偏移字符 |
+
+### 物品检查占位符
+
+| 占位符 | 说明 |
+|--------|------|
+| `%checkceitem_count_<ID>%` | 物品栏中指定物品数量 |
+| `%checkceitem_has_<ID>:[数量]%` | 是否有指定数量物品 |
+| `%checkceitem_id_[槽位]%` | 指定槽位物品的ID |
+| `%checkceitem_iscustom_[槽位]%` | 是否为自定义物品 |
+
+槽位可用数字、`main_hand`、`off_hand`。
+
+---
+
+## 三十七、常见问题排查
+
+### Q: 物品显示紫黑方块？
+A: 检查：
+1. 纹理是 `.png` 格式、尺寸是 2 的幂
+2. 纹理放在 `textures/item/` 或 `textures/block/`
+3. 模型 JSON 里纹理路径和实际文件对得上
+4. 看控制台报错
+
+### Q: 改了模型没反应？
+A: 用 `/ce reload all`，不是 `/ce reload`
+
+### Q: 两个同材质物品模型串了？
+A: `custom-model-data` 设成一样了。同 material 必须不同
+
+### Q: 配方不生效？
+A: `/ce reload recipe` 或 `/ce reload all`
+
+### Q: 物品名字没颜色？
+A: MiniMessage 格式用 `<>` 不是 `§`
+
+### Q: Spark 性能分析显示 CraftEngine 占用高？
+A: 以 `Injected` 开头的类是 CraftEngine 注入的优化代码，实际开销可能来自服务端原有逻辑。API 调用（绿色标记）也会被归入 CraftEngine。
+
+### Q: 家具改了配置不生效？
+A: 重载插件不会影响已放置的家具，需重启服务器或重载区块。
+
+### Q: 画/唱片改了不生效？
+A: Minecraft 注册表注册后不可变，需重新进入服务器。
+
+### Q: Folia 服务器配方重载崩了？
+A: Folia 的配方管理器不是线程安全的，运行时重载配方可能崩溃。尽量避免。
+
+---
+
+## 三十八、学习路线建议
+
+1. **先做物品**：照着第四节做一个带名字的物品，搞懂 YML 结构
+2. **再加模型**：用第十一节方法二（CraftEngine 生成），给物品换纹理
+3. **再学 BlockBench**：做一个真正的 3D 模型物品
+4. **再做配方**：让你的物品能被合成/烧炼
+5. **再做方块**：挑战方块状态和行为
+6. **再做家具**：家具实体、变体、座位
+7. **最后做装备/画/音效/表情**：高级功能
+
+遇到问题先看控制台报错，CraftEngine 报错信息一般都挺明确。
+
+---
+
+> 文档基于 CraftEngine 官方文档（https://ce.gtemc.cn/zh-Hans）全部内容整理，用大白话重写。
+> 官方文档由 XiaoMoMi 和 jhqwqmc 维护，最后更新于 2026年6月。
