@@ -44,6 +44,7 @@
 - [三十六、PlaceholderAPI 兼容](#三十六placeholderapi-兼容)
 - [三十七、常见问题排查](#三十七常见问题排查)
 - [三十八、学习路线建议](#三十八学习路线建议)
+- [三十九、替换原版容器与物品栏贴图](#三十九替换原版容器与物品栏贴图)
 
 ---
 
@@ -2267,6 +2268,82 @@ A: Folia 的配方管理器不是线程安全的，运行时重载配方可能�
 7. **最后做装备/画/音效/表情**：高级功能
 
 遇到问题先看控制台报错，CraftEngine 报错信息一般都挺明确。
+
+---
+
+## 三十九、替换原版容器与物品栏贴图
+
+CraftEngine 管理的资源包可以直接覆盖原版 GUI 贴图。不需要在 configuration 里写配置，直接把图片放到资源包对应路径就行。
+
+### 39.1 原版容器 GUI 贴图
+
+Minecraft 的容器界面贴图存放在固定路径，你用相同路径放一张同名 PNG 就能覆盖：
+
+```
+resources/tutorial/resourcepack/
+└── assets/
+    └── minecraft/
+        └── textures/
+            └── gui/
+                ├── container/
+                │   ├── chest.png              # 大箱子 GUI
+                │   ├── chest_top.png          # 箱子顶部槽位
+                │   ├── dispenser.png          # 发射器
+                │   ├── dropper.png            # 投掷器
+                │   ├── furnace.png            # 熔炉
+                │   ├── blast_furnace.png      # 高炉
+                │   ├── smoker.png             # 烟熏炉
+                │   ├── brewing_stand.png      # 酿造台
+                │   ├── anvil.png              # 铁砧
+                │   ├── beacon.png            # 信标
+                │   ├── hopper.png            # 漏斗
+                │   ├── shulker_box.png       # 潜影盒
+                │   ├── crafting_table.png    # 合成台
+                │   ├── stonecutter.png       # 切石机
+                │   ├── cartography_table.png  # 制图台
+                │   ├── loom.png              # 织布机
+                │   └── grindstone.png        # 砂轮
+                ├── recipe_book.png           # 配方书
+                ├── recipe_book_page.png
+                └── toasts.png                # 提示框
+```
+
+### 39.2 物品栏（背包）贴图
+
+玩家背包和快捷栏的贴图也在 `gui` 目录下：
+
+```
+assets/minecraft/textures/gui/
+├── inventory.png              # 生存背包界面
+├── hotbar.png                 # 快捷栏
+├── hotbar_selection.png       # 快捷栏选中框
+├── hotbar_offhand_left.png    # 副手槽（左）
+├── hotbar_offhand_right.png   # 副手槽（右）
+├── hearts.png                 # 生命值
+├── armor.png                  # 盔甲值
+├── hunger.png                 # 饥饿值
+├── experience_bars.png       # 经验条
+└── widgets.png               # 按钮、滑块等通用控件
+```
+
+### 39.3 操作步骤
+
+1. 找到你要替换的原版贴图（从原版 jar 里提取，或从 [minecraft-assets](https://github.com/InventivetalentDev/minecraft-assets) 下载）
+2. 用图片编辑器修改（尺寸必须和原图一致，保持 PNG 格式）
+3. 放到上面的对应路径
+4. 运行 `/ce reload all` 重新打包发送资源包
+
+### 39.4 只想替换特定容器
+
+比如只改熔炉界面，就只放 `furnace.png`，其他不管。资源包只会覆盖你提供了文件的那些贴图，没提供的还是用原版。
+
+### 39.5 注意事项
+
+1. **尺寸必须和原图一致** — 不要随意改尺寸，否则 UI 会错位
+2. **像素风格** — Minecraft GUI 贴图通常是小尺寸像素图（比如热栏 256x256），放大编辑容易模糊
+3. **mipmap 问题** — GUI 贴图和模型贴图不要放同一个目录，否则 mipmap 会导致降级
+4. **版本差异** — 不同 MC 版本的 GUI 贴图路径可能有变化，1.21+ 有些 GUI 改用了 JSON 渲染（比如合成台分了多个小图）
+5. **不需要在 configuration 里配置** — 纯资源包覆盖，直接放文件就行，`/ce reload all` 会自动打包
 
 ---
 
